@@ -1,0 +1,77 @@
+// Pattern: GLOBAL AGENT (Monolith)
+// A single Kubernetes pod is provisioned for the entire pipeline run.
+// Both parallel branches execute inside sibling containers of that ONE pod,
+// sharing the same workspace volume (emptyDir) and the same pod-level
+// resource envelope (requests/limits apply once, for the whole pod).
+pipeline {
+    agent {
+        kubernetes {
+            yaml '''
+apiVersion: v1
+kind: Pod
+spec:
+  nodeSelector:
+    workload: agent
+  tolerations:
+  - key: workload
+    operator: Equal
+    value: agent
+    effect: NoSchedule
+  securityContext:
+    fsGroup: 1000
+  containers:
+  - name: maven
+    image: maven:3.9.9-eclipse-temurin-21
+    command:
+    - sleep
+    args:
+    - infinity
+    resources:
+      requests:
+        cpu: "500m"
+        memory: "512Mi"
+      limits:
+        cpu: "1"
+        memory: "1Gi"
+    securityContext:
+      runAsUser: 1000
+  - name: node
+    image: node:20-alpine
+    command:
+    - sleep
+    args:
+    - infinity
+    resources:
+      requests:
+        cpu: "500m"
+        memory: "512Mi"
+      limits:
+        cpu: "1"
+        memory: "1Gi"
+    securityContext:
+      runAsUser: 1000
+'''
+        }
+    }
+    stages {
+        stage('Parallel Build') {
+            parallel {
+                stage('Backend') {
+                    steps {
+                        container('maven') {
+                            sh 'mvn -version'
+                        }
+                    }
+                }
+                stage('Frontend') {
+                    steps {
+                        container('node') {
+                            // Same shared workspace as the Backend branch above
+                            sh 'node -v'
+                        }
+                    }
+                }
+            }
+        }
+    }
+}

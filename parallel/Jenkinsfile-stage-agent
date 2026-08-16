@@ -1,0 +1,96 @@
+// Pattern: STAGE-SPECIFIC AGENT (Distributed)
+// No top-level agent is provisioned (agent none). Each parallel branch
+// requests its OWN Kubernetes pod, sized and specced only for that branch's
+// workload. Jenkins schedules the two pods independently, potentially on
+// different nodes, and each gets an isolated workspace/volume.
+pipeline {
+    agent none
+    stages {
+        stage('Parallel Build') {
+            parallel {
+                stage('Backend') {
+                    agent {
+                        kubernetes {
+                            yaml '''
+apiVersion: v1
+kind: Pod
+spec:
+  nodeSelector:
+    workload: agent
+  tolerations:
+  - key: workload
+    operator: Equal
+    value: agent
+    effect: NoSchedule
+  securityContext:
+    fsGroup: 1000
+  containers:
+  - name: maven
+    image: maven:3.9.9-eclipse-temurin-21
+    command:
+    - sleep
+    args:
+    - infinity
+    resources:
+      requests:
+        cpu: "1"
+        memory: "1Gi"
+      limits:
+        cpu: "2"
+        memory: "2Gi"
+    securityContext:
+      runAsUser: 1000
+'''
+                        }
+                    }
+                    steps {
+                        container('maven') {
+                            sh 'mvn -version'
+                        }
+                    }
+                }
+                stage('Frontend') {
+                    agent {
+                        kubernetes {
+                            yaml '''
+apiVersion: v1
+kind: Pod
+spec:
+  nodeSelector:
+    workload: agent
+  tolerations:
+  - key: workload
+    operator: Equal
+    value: agent
+    effect: NoSchedule
+  securityContext:
+    fsGroup: 1000
+  containers:
+  - name: node
+    image: node:20-alpine
+    command:
+    - sleep
+    args:
+    - infinity
+    resources:
+      requests:
+        cpu: "500m"
+        memory: "512Mi"
+      limits:
+        cpu: "1"
+        memory: "1Gi"
+    securityContext:
+      runAsUser: 1000
+'''
+                        }
+                    }
+                    steps {
+                        container('node') {
+                            sh 'node -v'
+                        }
+                    }
+                }
+            }
+        }
+    }
+}
