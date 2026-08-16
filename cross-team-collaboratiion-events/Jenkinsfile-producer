@@ -1,0 +1,47 @@
+pipeline {
+    agent {
+        kubernetes {
+            yaml '''
+apiVersion: v1
+kind: Pod
+spec:
+  nodeSelector:
+    workload: agent
+  tolerations:
+  - key: workload
+    operator: Equal
+    value: agent
+    effect: NoSchedule
+  securityContext:
+    fsGroup: 1000
+  containers:
+  - name: maven
+    image: maven:3.9.9-eclipse-temurin-21
+    command:
+    - sleep
+    args:
+    - infinity
+    resources:
+      requests:
+        cpu: "500m"
+        memory: "512Mi"
+      limits:
+        cpu: "1"
+        memory: "1Gi"
+    securityContext:
+      runAsUser: 1000
+'''
+        }
+    }
+    stages {
+
+        stage("notify") {
+            steps {
+                container("maven") {
+                    //  publishEvent event:jsonEvent('{"eventName":"helloWorld"}'), verbose: true
+                    publishEvent event: jsonEvent('{"event":"com.example:supply-chain-webapp:1.2-SNAPSHOT:war","mavenArtifact":{"groupId":"com.example", "artifactId":"cloudbees-jar", "version":"0.5-SNAPSHOT"}} '), verbose: true
+                }
+            }
+        }
+    }
+}

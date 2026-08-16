@@ -1,0 +1,49 @@
+pipeline {
+    agent {
+        kubernetes {
+            yaml '''
+apiVersion: v1
+kind: Pod
+spec:
+  nodeSelector:
+    workload: agent
+  tolerations:
+  - key: workload
+    operator: Equal
+    value: agent
+    effect: NoSchedule
+  securityContext:
+    fsGroup: 1000
+  containers:
+  - name: curl
+    image: curlimages/curl:8.10.1
+    command:
+    - sleep
+    args:
+    - infinity
+    resources:
+      requests:
+        cpu: "100m"
+        memory: "128Mi"
+      limits:
+        cpu: "250m"
+        memory: "256Mi"
+    securityContext:
+      runAsUser: 1000
+'''
+        }
+    }
+    triggers {
+        eventTrigger jmespathQuery("contains(event, 'com.example:') && contains(event, '-SNAPSHOT')")
+    }
+
+    stages {
+        stage('Example') {
+            steps {
+                container("curl") {
+                    echo "called"
+                }
+            }
+        }
+    }
+}
