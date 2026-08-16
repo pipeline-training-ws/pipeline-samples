@@ -1,0 +1,94 @@
+pipeline {
+    agent none
+    stages {
+        stage('Say Hello') {
+            agent {
+                kubernetes {
+                    yaml '''
+apiVersion: v1
+kind: Pod
+spec:
+  nodeSelector:
+    workload: agent
+  tolerations:
+  - key: workload
+    operator: Equal
+    value: agent
+    effect: NoSchedule
+  securityContext:
+    fsGroup: 1000
+  containers:
+  - name: curl
+    image: curlimages/curl:8.10.1
+    command:
+    - sleep
+    args:
+    - infinity
+    resources:
+      requests:
+        cpu: "100m"
+        memory: "128Mi"
+      limits:
+        cpu: "250m"
+        memory: "256Mi"
+    securityContext:
+      runAsUser: 1000
+'''
+                }
+            }
+            steps {
+                echo 'Hello World!'
+                sleep 5
+            }
+        }
+        stage('Checkpoint Hello') {
+            steps {
+                checkpoint 'Hello'
+            }
+        }
+        stage('Say Good By') {
+            agent {
+                kubernetes {
+                    yaml '''
+apiVersion: v1
+kind: Pod
+spec:
+  nodeSelector:
+    workload: agent
+  tolerations:
+  - key: workload
+    operator: Equal
+    value: agent
+    effect: NoSchedule
+  securityContext:
+    fsGroup: 1000
+  containers:
+  - name: curl
+    image: curlimages/curl:8.10.1
+    command:
+    - sleep
+    args:
+    - infinity
+    resources:
+      requests:
+        cpu: "100m"
+        memory: "128Mi"
+      limits:
+        cpu: "250m"
+        memory: "256Mi"
+    securityContext:
+      runAsUser: 1000
+'''
+                }
+            }
+            steps {
+                echo 'Say Good By'
+            }
+        }
+        stage('Checkpoint ByBy') {
+            steps {
+                checkpoint 'ByBy'
+            }
+        }
+    }
+}
