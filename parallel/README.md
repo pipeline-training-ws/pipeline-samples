@@ -9,6 +9,8 @@ two fundamentally different Kubernetes agent-provisioning strategies:
 | [`Jenkinsfile-global-agent`](./Jenkinsfile-global-agent) | Monolith: one pod, many containers | `kubernetes { yaml ... }` |
 | [`Jenkinsfile-stage-agent`](./Jenkinsfile-stage-agent) | Distributed: one pod per stage | `none` |
 
+A Marp slide deck covering the same comparison is available in [`SLIDES.md`](./SLIDES.md).
+
 Both pipelines assume the [Kubernetes plugin](https://plugins.jenkins.io/kubernetes/)
 is configured with a Kubernetes cloud, and that a node pool exists matching the
 `nodeSelector`/`toleration` pair used in the sample YAML (`workload: agent`).
