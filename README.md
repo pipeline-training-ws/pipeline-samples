@@ -1,11 +1,3 @@
-* CloudBee Properitary Pipeline features
-
-<https://docs.cloudbees.com/docs/cloudbees-ci/latest/pipelines/pipeline-benefits>
-
-Comparison between **Scripted** and **Declarative** Jenkins Pipelines, along with clear recommendations on when to choose which style.
-
----
-
 ## 📦 Samples in This Repository
 
 | Sample | Description |
@@ -71,27 +63,3 @@ Comparison between **Scripted** and **Declarative** Jenkins Pipelines, along wit
 * **Why:**
 * **Unrestricted Expressiveness:** Provides the full power of a programming language rather than a constrained configuration DSL.
 * **Dynamic Execution:** Enables complex looping, conditional execution, and multi-branch execution flows that are impossible or awkward to represent in Declarative blocks without nesting `script {}` overrides.
-
----
-
-## ⚙️ Job Settings: Branch Suppression Strategies
-
-Suppress automatic triggering for all branches, except PRs:
-
-```yaml
-strategy:
-  namedBranchesDifferent:
-    defaultProperties:
-      - suppressAutomaticTriggering:
-          triggeredBranchesRegex: ^.*$
-          strategy: INDEXING
-    namedExceptions:
-      - named:
-          name: PR-\d+
-          props:
-            - suppressAutomaticTriggering:
-                triggeredBranchesRegex: ''
-                strategy: NONE
-```
-
----
